@@ -8,7 +8,7 @@ Meeting Shrinker is a static, browser-first web app for preparing Thai-heavy mee
 Live web app: [https://meeting-shrinker.netlify.app](https://meeting-shrinker.netlify.app)
 
 <div align="center">
-  <img src="src/Banner.png" width="65%" alt="Meeting Shrinker logo">
+  <img src="src/Banner.png" width="90%" alt="Meeting Shrinker logo">
 </div>
 
 It helps with this workflow:
