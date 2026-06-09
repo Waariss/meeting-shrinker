@@ -1,6 +1,10 @@
 # Meeting Shrinker for NotebookLM
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/201e62cf-1543-4203-8694-bbae2b76e224/deploy-status)](https://app.netlify.com/sites/waris-damkham/deploys)
+
 Meeting Shrinker is a static, browser-first web app for preparing Thai-heavy meeting recordings for NotebookLM.
+
+Live web app: [https://meeting-shrinker.netlify.app](https://meeting-shrinker.netlify.app)
 
 It helps with this workflow:
 
@@ -24,6 +28,8 @@ These limits are treated as assumptions for the MVP and may change.
 ## Features
 
 - Upload `.mp4`, `.mov`, `.m4a`, `.mp3`, `.wav`, `.webm`, `.txt`, `.srt`, and `.vtt`.
+- Switch the interface between English and Thai.
+- Switch between light and dark mode.
 - Show original file size and NotebookLM readiness status.
 - Extract audio with `ffmpeg.wasm`.
 - Compress MP4 output with smallest, balanced, or better-quality presets.

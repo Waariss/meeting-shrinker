@@ -22,15 +22,15 @@ export function FileInfoCard({ file }: FileInfoCardProps) {
   const StatusIcon = toneIcons[status.tone]
 
   return (
-    <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
+    <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel dark:border-white/10 dark:bg-[#111f27]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-ink/5 text-ink">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-ink/5 text-ink dark:bg-white/10 dark:text-white">
             <FileText aria-hidden="true" size={22} />
           </div>
           <div className="min-w-0">
-            <h2 className="break-words text-lg font-semibold text-ink">{file.name}</h2>
-            <p className="mt-1 text-sm text-ink/65">
+            <h2 className="break-words text-lg font-semibold text-ink dark:text-white">{file.name}</h2>
+            <p className="mt-1 text-sm text-ink/65 dark:text-white/65">
               {file.type || 'Unknown type'} · {formatBytes(file.size)}
             </p>
           </div>
@@ -39,11 +39,10 @@ export function FileInfoCard({ file }: FileInfoCardProps) {
           <StatusIcon aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
           <div>
             <p className="font-semibold">{status.label}</p>
-            <p className="text-ink/70">{status.helper}</p>
+            <p className="text-ink/70 dark:text-white/75">{status.helper}</p>
           </div>
         </div>
       </div>
     </section>
   )
 }
-

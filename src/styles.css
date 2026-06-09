@@ -14,6 +14,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark {
+  color: #f4f7f6;
+  background: #0d171c;
+}
+
 body {
   margin: 0;
   min-width: 320px;
