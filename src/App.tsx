@@ -15,7 +15,6 @@ import {
   SAFE_TARGET_WORDS,
   SUPPORTED_EXTENSIONS
 } from './lib/notebooklmLimits'
-import { splitBlobBySize } from './lib/splitFile'
 import {
   cleanTranscriptText,
   parseSrtToText,
@@ -27,6 +26,8 @@ import { MockTranscriptionProvider } from './types/transcript'
 const accept = SUPPORTED_EXTENSIONS.map((extension) => `.${extension}`).join(',')
 const transcriptExtensions = new Set(['txt', 'srt', 'vtt'])
 const mediaExtensions = new Set(['mp4', 'mov', 'm4a', 'mp3', 'wav', 'webm'])
+const videoExtensions = new Set(['mp4', 'mov', 'webm'])
+const audioExtensions = new Set(['m4a', 'mp3', 'wav'])
 type Language = 'en' | 'th'
 type Theme = 'light' | 'dark'
 
@@ -100,7 +101,9 @@ const copy = {
       cannotProcess: 'Could not process this file. Try converting it to MP4 or MP3 first.',
       splitLarge: 'Output is still above 190MB. Splitting into multiple parts.',
       extractingAudio: 'Extracting audio for transcription or NotebookLM upload...',
+      audioAlreadyReady: 'Audio file is already ready for NotebookLM. Checking whether it needs splitting...',
       compressingVideo: 'Compressing video with selected preset...',
+      skippingVideoForAudio: 'Skipping video compression for audio-only input.',
       splittingFile: 'Splitting file into NotebookLM-safe parts...',
       done: 'Done. NotebookLM-ready files are available below.'
     }
@@ -173,7 +176,9 @@ const copy = {
       cannotProcess: 'ไม่สามารถประมวลผลไฟล์นี้ได้ ลองแปลงเป็น MP4 หรือ MP3 ก่อน',
       splitLarge: 'ไฟล์ยังเกิน 190MB ระบบจะแบ่งเป็นหลาย part ให้',
       extractingAudio: 'กำลังแยกเสียงสำหรับ transcription หรือ NotebookLM...',
+      audioAlreadyReady: 'ไฟล์เสียงพร้อมใช้แล้ว กำลังตรวจว่าต้องแบ่งไฟล์หรือไม่...',
       compressingVideo: 'กำลังบีบวิดีโอตาม preset ที่เลือก...',
+      skippingVideoForAudio: 'ข้ามการบีบวิดีโอ เพราะ input เป็นไฟล์เสียง',
       splittingFile: 'กำลังแบ่งไฟล์ให้อยู่ในขนาดที่เหมาะกับ NotebookLM...',
       done: 'เสร็จแล้ว ไฟล์สำหรับ NotebookLM อยู่ด้านล่าง'
     }
@@ -262,18 +267,21 @@ function App() {
 
   const prepareMediaFile = async (file: File): Promise<File[]> => {
     const outputs: File[] = []
+    const extension = getFileExtension(file.name)
+    const isVideo = videoExtensions.has(extension)
+    const isAudio = audioExtensions.has(extension)
 
     if (outputMode === 'audio' || outputMode === 'full') {
-      addLog(t.messages.extractingAudio)
-      const audio = await extractAudio(file, preset, addLog)
+      addLog(isAudio ? t.messages.audioAlreadyReady : t.messages.extractingAudio)
+      const audio = isAudio ? file : await extractAudio(file, preset, addLog)
       outputs.push(audio)
       if (bytesToMB(audio.size) > SAFE_TARGET_MB) {
         addLog(t.messages.splitLarge)
-        outputs.push(...splitBlobBySize(audio, SAFE_TARGET_MB))
+        outputs.push(...(await splitMediaByDuration(audio, SAFE_TARGET_MB)))
       }
     }
 
-    if (outputMode === 'video' || outputMode === 'full') {
+    if ((outputMode === 'video' || outputMode === 'full') && isVideo) {
       addLog(t.messages.compressingVideo)
       const compressed = await compressVideo(file, preset, addLog)
       if (bytesToMB(compressed.size) > SAFE_TARGET_MB) {
@@ -282,6 +290,8 @@ function App() {
       } else {
         outputs.push(compressed)
       }
+    } else if ((outputMode === 'video' || outputMode === 'full') && isAudio) {
+      addLog(t.messages.skippingVideoForAudio)
     }
 
     if (outputMode === 'split') {

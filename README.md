@@ -62,6 +62,17 @@ npm run build
 
 The production build is written to `dist/`.
 
+## Test
+
+```bash
+npm run lint
+npm run test
+npm run e2e
+```
+
+- `npm run test` runs Vitest unit tests for transcript parsing/splitting and file-size helpers.
+- `npm run e2e` runs Playwright checks for app load, English/Thai toggle, light/dark mode, unsupported uploads, transcript export, NotebookLM link, and mobile overflow.
+
 ## Deploy To Netlify
 
 This project is a static Netlify app.
@@ -76,9 +87,39 @@ The included `netlify.toml` sets the same build settings and adds the cross-orig
 ## Known Limitations
 
 - Browser video processing is memory-intensive. Large files are better handled on desktop.
-- Splitting currently uses safe byte-size chunking for the MVP. Duration-aware splitting can be improved later.
-- Transcription is a placeholder. The app prepares audio and includes a typed provider interface for future STT integration.
+- Media splitting uses ffmpeg time ranges instead of raw byte slicing so generated MP4/MOV/WebM chunks are intended to remain playable. If ffmpeg cannot detect duration or segment safely, the app should show an error instead of silently creating invalid chunks.
+- Browser memory limits still apply. Very large Google Meet recordings may fail in mobile browsers or low-memory devices.
+- Thai and English transcription generation is a placeholder unless an STT provider is connected. The app can clean uploaded transcripts and prepare/extract audio for external transcription workflows.
 - No direct NotebookLM upload automation is attempted because there is no official supported API in this MVP.
+
+## Recommended Large-File Workflow
+
+1. Use a laptop or desktop browser for long recordings.
+2. Try `Extract audio only` or `Smallest file / audio only` first.
+3. If a video must be uploaded, use `Balanced` compression before splitting.
+4. Keep each exported file below the 190MB safe target before uploading to NotebookLM.
+5. For transcripts, upload `.txt`, `.srt`, or `.vtt` files and export the cleaned NotebookLM-ready `.txt` chunks.
+
+## Test Fixtures
+
+Small text fixtures live under `tests/fixtures/`:
+
+- `transcript.txt`
+- `transcript.srt`
+- `transcript.vtt`
+- `unsupported.pdf`
+
+Media QA should start with small generated files under 10MB before trying larger recordings. Avoid beginning QA with real large meeting recordings because browser memory failures can be slow and noisy.
+
+## Manual QA Checklist
+
+- Verify `npm install`, `npm run lint`, `npm run test`, `npm run build`, `npm run dev`, and `npm run preview`.
+- Check desktop, laptop, tablet, mobile, and small-mobile viewport widths for horizontal overflow.
+- Toggle English/Thai and light/dark mode.
+- Upload supported transcript files and confirm cleaned downloadable outputs.
+- Upload an unsupported file and confirm a clear error.
+- Test small MP4 extraction/compression before trying large files.
+- Confirm the live Netlify app loads and keeps the COOP/COEP headers required for ffmpeg.wasm.
 
 ## Future Roadmap
 
