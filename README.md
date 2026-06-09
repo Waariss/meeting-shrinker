@@ -1,5 +1,6 @@
 # Meeting Shrinker for NotebookLM
 
+[![QA](https://github.com/Waariss/meeting-shrinker/actions/workflows/qa.yml/badge.svg)](https://github.com/Waariss/meeting-shrinker/actions/workflows/qa.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/201e62cf-1543-4203-8694-bbae2b76e224/deploy-status)](https://app.netlify.com/sites/waris-damkham/deploys)
 
 Meeting Shrinker is a static, browser-first web app for preparing Thai-heavy meeting recordings for NotebookLM.
