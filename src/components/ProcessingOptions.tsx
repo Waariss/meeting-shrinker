@@ -6,20 +6,17 @@ export type OutputMode = 'audio' | 'video' | 'split' | 'full'
 type ProcessingOptionsProps = {
   outputMode: OutputMode
   preset: CompressionPreset
-  keepTimestamps: boolean
   copy: {
     title: string
     subtitle: string
     outputMode: string
     compressionPreset: string
-    keepTimestamps: string
     process: string
     outputModes: Array<{ value: OutputMode; label: string; helper: string }>
     presets: Array<{ value: CompressionPreset; label: string; helper: string }>
   }
   onOutputModeChange: (mode: OutputMode) => void
   onPresetChange: (preset: CompressionPreset) => void
-  onKeepTimestampsChange: (keep: boolean) => void
   onProcess: () => void
   disabled: boolean
 }
@@ -27,11 +24,9 @@ type ProcessingOptionsProps = {
 export function ProcessingOptions({
   outputMode,
   preset,
-  keepTimestamps,
   copy,
   onOutputModeChange,
   onPresetChange,
-  onKeepTimestampsChange,
   onProcess,
   disabled
 }: ProcessingOptionsProps) {
@@ -102,16 +97,6 @@ export function ProcessingOptions({
           ))}
         </div>
       </fieldset>
-
-      <label className="mt-5 flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-ink/10 p-3 dark:border-white/10">
-        <input
-          type="checkbox"
-          checked={keepTimestamps}
-          onChange={(event) => onKeepTimestampsChange(event.target.checked)}
-          className="h-4 w-4 accent-sea"
-        />
-        <span className="text-sm text-ink dark:text-white">{copy.keepTimestamps}</span>
-      </label>
 
       <button
         type="button"

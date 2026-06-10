@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, Languages, ListChecks } from 'lucide-react'
+import { AlertCircle, FileText, FileVideo, Languages, ListChecks } from 'lucide-react'
 import { FileDropzone } from './components/FileDropzone'
 import { FileInfoCard } from './components/FileInfoCard'
 import { Header } from './components/Header'
@@ -7,6 +7,7 @@ import { PrivacyNotice } from './components/PrivacyNotice'
 import { ProcessingOptions, type OutputMode } from './components/ProcessingOptions'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultsPanel } from './components/ResultsPanel'
+import { TranscriptOptions } from './components/TranscriptOptions'
 import { compressVideo, extractAudio, splitMediaByDuration, type CompressionPreset } from './lib/ffmpegClient'
 import { baseName, bytesToMB, getFileExtension } from './lib/fileSize'
 import {
@@ -22,13 +23,15 @@ import {
   splitTranscriptByWords
 } from './lib/transcriptCleaner'
 
-const accept = SUPPORTED_EXTENSIONS.map((extension) => `.${extension}`).join(',')
+const mediaAccept = ['mp4', 'mov', 'm4a', 'mp3', 'wav', 'webm'].map((extension) => `.${extension}`).join(',')
+const transcriptAccept = ['txt', 'srt', 'vtt'].map((extension) => `.${extension}`).join(',')
 const transcriptExtensions = new Set(['txt', 'srt', 'vtt'])
 const mediaExtensions = new Set(['mp4', 'mov', 'm4a', 'mp3', 'wav', 'webm'])
 const videoExtensions = new Set(['mp4', 'mov', 'webm'])
 const audioExtensions = new Set(['m4a', 'mp3', 'wav'])
 type Language = 'en' | 'th'
 type Theme = 'light' | 'dark'
+type Workflow = 'media' | 'transcript'
 
 const copy = {
   en: {
@@ -38,12 +41,21 @@ const copy = {
       warning: 'All compression runs locally in your browser. Large files may take time depending on your device.'
     },
     upload: {
-      title: 'Upload Meeting File',
-      helper: 'Upload English or Thai meetings: MP4, MP3, M4A, MOV, WEBM, TXT, SRT, or VTT.',
+      mediaTitle: 'Upload Media File',
+      mediaHelper: 'Upload English or Thai meetings: MP4, MP3, M4A, MOV, or WEBM.',
+      transcriptTitle: 'Upload Existing Transcript',
+      transcriptHelper: 'Upload TXT, SRT, or VTT that you already have. The app will clean and split it for NotebookLM.',
       button: 'Choose files'
     },
+    workflow: {
+      title: 'Choose what you want to prepare',
+      mediaLabel: 'Media file',
+      mediaHelper: 'Compress video, extract audio, or split large meeting files.',
+      transcriptLabel: 'Existing transcript',
+      transcriptHelper: 'Clean and split TXT, SRT, or VTT files you already have.'
+    },
     options: {
-      title: 'Processing Options',
+      title: 'Media Processing',
       subtitle: 'Compress for NotebookLM and keep each output below the safe limit.',
       outputMode: 'Output mode',
       compressionPreset: 'Compression preset',
@@ -60,6 +72,13 @@ const copy = {
         { value: 'balanced' as const, label: 'Balanced', helper: '720p, 24fps, 64k audio' },
         { value: 'quality' as const, label: 'Better quality', helper: 'Up to 1080p, 128k audio' }
       ]
+    },
+    transcriptOptions: {
+      title: 'Transcript Cleanup',
+      subtitle: 'Clean and split transcript files you already have. This does not create a transcript from audio.',
+      supported: 'Supported inputs: TXT, SRT, and VTT. SRT/VTT timestamps can be kept or removed before export.',
+      keepTimestamps: 'Keep transcript timestamps',
+      process: 'Clean transcript for NotebookLM'
     },
     progress: {
       title: 'Processing status',
@@ -113,12 +132,21 @@ const copy = {
       warning: 'การบีบอัดทำใน browser ของคุณทั้งหมด ไฟล์ใหญ่อาจใช้เวลานานตามเครื่องที่ใช้'
     },
     upload: {
-      title: 'อัปโหลดไฟล์ประชุม',
-      helper: 'รองรับ meeting ภาษาไทยหรืออังกฤษ: MP4, MP3, M4A, MOV, WEBM, TXT, SRT หรือ VTT',
+      mediaTitle: 'อัปโหลดไฟล์เสียง/วิดีโอประชุม',
+      mediaHelper: 'รองรับ meeting ภาษาไทยหรืออังกฤษ: MP4, MP3, M4A, MOV หรือ WEBM',
+      transcriptTitle: 'อัปโหลด transcript ที่มีอยู่แล้ว',
+      transcriptHelper: 'รองรับ TXT, SRT หรือ VTT ที่คุณมีอยู่แล้ว ระบบจะ clean และ split สำหรับ NotebookLM',
       button: 'เลือกไฟล์'
     },
+    workflow: {
+      title: 'เลือกสิ่งที่ต้องการเตรียม',
+      mediaLabel: 'ไฟล์เสียง/วิดีโอ',
+      mediaHelper: 'บีบวิดีโอ แยกเสียง หรือแบ่งไฟล์ประชุมขนาดใหญ่',
+      transcriptLabel: 'Transcript ที่มีอยู่แล้ว',
+      transcriptHelper: 'Clean และ split ไฟล์ TXT, SRT หรือ VTT ที่มีอยู่แล้ว'
+    },
     options: {
-      title: 'ตัวเลือกการประมวลผล',
+      title: 'ประมวลผลไฟล์เสียง/วิดีโอ',
       subtitle: 'บีบไฟล์สำหรับ NotebookLM และคุม output ให้อยู่ใต้ safe limit',
       outputMode: 'รูปแบบ output',
       compressionPreset: 'ระดับการบีบอัด',
@@ -135,6 +163,13 @@ const copy = {
         { value: 'balanced' as const, label: 'สมดุล', helper: '720p, 24fps, audio 64k' },
         { value: 'quality' as const, label: 'คุณภาพดีกว่า', helper: 'สูงสุด 1080p, audio 128k' }
       ]
+    },
+    transcriptOptions: {
+      title: 'Clean Transcript',
+      subtitle: 'Clean และ split transcript ที่มีอยู่แล้ว ยังไม่ใช่การสร้าง transcript จากเสียง',
+      supported: 'รองรับ TXT, SRT และ VTT โดยเลือกได้ว่าจะเก็บหรือลบ timestamps จาก SRT/VTT ก่อน export',
+      keepTimestamps: 'เก็บ timestamps ใน transcript',
+      process: 'Clean transcript สำหรับ NotebookLM'
     },
     progress: {
       title: 'สถานะการประมวลผล',
@@ -185,6 +220,7 @@ const copy = {
 function App() {
   const [language, setLanguage] = useState<Language>('en')
   const [theme, setTheme] = useState<Theme>('light')
+  const [workflow, setWorkflow] = useState<Workflow>('media')
   const [files, setFiles] = useState<File[]>([])
   const [outputMode, setOutputMode] = useState<OutputMode>('full')
   const [preset, setPreset] = useState<CompressionPreset>('balanced')
@@ -217,7 +253,18 @@ function App() {
     setError(undefined)
     setLogs([])
     setResults([])
+    const firstExtension = getFileExtension(nextFiles[0]?.name ?? '')
+    if (transcriptExtensions.has(firstExtension)) setWorkflow('transcript')
+    if (mediaExtensions.has(firstExtension)) setWorkflow('media')
     setFiles(nextFiles)
+  }
+
+  const handleWorkflowChange = (nextWorkflow: Workflow) => {
+    setWorkflow(nextWorkflow)
+    setError(undefined)
+    setLogs([])
+    setResults([])
+    setFiles([])
   }
 
   const validateFiles = () => {
@@ -227,6 +274,16 @@ function App() {
     }
 
     if (unsupportedFiles.length) {
+      setError(t.messages.unsupported)
+      return false
+    }
+
+    const hasWrongWorkflowFile = files.some((file) => {
+      const extension = getFileExtension(file.name)
+      return workflow === 'transcript' ? !transcriptExtensions.has(extension) : !mediaExtensions.has(extension)
+    })
+
+    if (hasWrongWorkflowFile) {
       setError(t.messages.unsupported)
       return false
     }
@@ -349,11 +406,53 @@ function App() {
         onThemeToggle={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
       />
       <main className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel dark:border-white/10 dark:bg-[#111f27]">
+          <h2 className="text-lg font-semibold text-ink dark:text-white">{t.workflow.title}</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleWorkflowChange('media')}
+              className={`flex min-h-20 items-start gap-3 rounded-lg border p-4 text-left transition active:scale-[0.99] ${
+                workflow === 'media'
+                  ? 'border-sea bg-sea/5'
+                  : 'border-ink/10 hover:border-ink/30 dark:border-white/10 dark:hover:border-white/30'
+              }`}
+            >
+              <FileVideo aria-hidden="true" className="mt-0.5 shrink-0 text-sea" size={22} />
+              <span>
+                <span className="block text-sm font-semibold text-ink dark:text-white">{t.workflow.mediaLabel}</span>
+                <span className="mt-1 block text-sm leading-6 text-ink/65 dark:text-white/65">
+                  {t.workflow.mediaHelper}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleWorkflowChange('transcript')}
+              className={`flex min-h-20 items-start gap-3 rounded-lg border p-4 text-left transition active:scale-[0.99] ${
+                workflow === 'transcript'
+                  ? 'border-sea bg-sea/5'
+                  : 'border-ink/10 hover:border-ink/30 dark:border-white/10 dark:hover:border-white/30'
+              }`}
+            >
+              <FileText aria-hidden="true" className="mt-0.5 shrink-0 text-sea" size={22} />
+              <span>
+                <span className="block text-sm font-semibold text-ink dark:text-white">
+                  {t.workflow.transcriptLabel}
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-ink/65 dark:text-white/65">
+                  {t.workflow.transcriptHelper}
+                </span>
+              </span>
+            </button>
+          </div>
+        </section>
+
         <FileDropzone
           onFilesSelected={handleFilesSelected}
-          accept={accept}
-          title={t.upload.title}
-          helper={t.upload.helper}
+          accept={workflow === 'media' ? mediaAccept : transcriptAccept}
+          title={workflow === 'media' ? t.upload.mediaTitle : t.upload.transcriptTitle}
+          helper={workflow === 'media' ? t.upload.mediaHelper : t.upload.transcriptHelper}
           buttonLabel={t.upload.button}
         />
 
@@ -367,17 +466,25 @@ function App() {
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
           <div className="grid gap-5">
-            <ProcessingOptions
-              outputMode={outputMode}
-              preset={preset}
-              keepTimestamps={keepTimestamps}
-              copy={t.options}
-              onOutputModeChange={setOutputMode}
-              onPresetChange={setPreset}
-              onKeepTimestampsChange={setKeepTimestamps}
-              onProcess={handleProcess}
-              disabled={isProcessing}
-            />
+            {workflow === 'media' ? (
+              <ProcessingOptions
+                outputMode={outputMode}
+                preset={preset}
+                copy={t.options}
+                onOutputModeChange={setOutputMode}
+                onPresetChange={setPreset}
+                onProcess={handleProcess}
+                disabled={isProcessing}
+              />
+            ) : (
+              <TranscriptOptions
+                keepTimestamps={keepTimestamps}
+                copy={t.transcriptOptions}
+                onKeepTimestampsChange={setKeepTimestamps}
+                onProcess={handleProcess}
+                disabled={isProcessing}
+              />
+            )}
             <ProgressPanel
               logs={logs}
               isProcessing={isProcessing}

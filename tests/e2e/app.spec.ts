@@ -43,7 +43,7 @@ test('TXT transcript upload creates downloadable output', async ({ page }) => {
   await page.goto('/')
   await page.locator('input[type="file"]').setInputFiles(fixture('transcript.txt'))
 
-  await page.getByRole('button', { name: 'Prepare NotebookLM files' }).click()
+  await page.getByRole('button', { name: 'Clean transcript for NotebookLM' }).click()
 
   await expect(page.getByText('transcript_transcript_part-001.txt')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Download ZIP' })).toBeVisible()
@@ -53,7 +53,7 @@ test('SRT transcript upload creates cleaned output', async ({ page }) => {
   await page.goto('/')
   await page.locator('input[type="file"]').setInputFiles(fixture('transcript.srt'))
 
-  await page.getByRole('button', { name: 'Prepare NotebookLM files' }).click()
+  await page.getByRole('button', { name: 'Clean transcript for NotebookLM' }).click()
 
   await expect(page.getByText('transcript_transcript_part-001.txt')).toBeVisible()
 })
@@ -61,7 +61,7 @@ test('SRT transcript upload creates cleaned output', async ({ page }) => {
 test('Open NotebookLM points to correct URL', async ({ page }) => {
   await page.goto('/')
   await page.locator('input[type="file"]').setInputFiles(fixture('transcript.txt'))
-  await page.getByRole('button', { name: 'Prepare NotebookLM files' }).click()
+  await page.getByRole('button', { name: 'Clean transcript for NotebookLM' }).click()
 
   await expect(page.getByRole('link', { name: /Open NotebookLM/ })).toHaveAttribute(
     'href',
