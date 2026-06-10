@@ -39,7 +39,7 @@ These limits are treated as assumptions for the MVP and may change.
 - Extract audio with `ffmpeg.wasm`.
 - Compress MP4 output with smallest, balanced, or better-quality presets.
 - Split output files above 190MB into parts.
-- Clean `.txt`, `.srt`, and `.vtt` transcripts.
+- Clean uploaded `.txt`, `.srt`, and `.vtt` transcripts.
 - Split transcript output below 450,000 words per file.
 - Download outputs individually or as a ZIP.
 - Open NotebookLM at `https://notebooklm.google.com/`.
@@ -94,7 +94,7 @@ The included `netlify.toml` sets the same build settings and adds the cross-orig
 - Browser video processing is memory-intensive. Large files are better handled on desktop.
 - Media splitting uses ffmpeg time ranges instead of raw byte slicing so generated MP4/MOV/WebM chunks are intended to remain playable. If ffmpeg cannot detect duration or segment safely, the app should show an error instead of silently creating invalid chunks.
 - Browser memory limits still apply. Very large Google Meet recordings may fail in mobile browsers or low-memory devices.
-- Thai and English transcription generation is a placeholder unless an STT provider is connected. The app can clean uploaded transcripts and prepare/extract audio for external transcription workflows.
+- Thai and English transcription generation is a coming feature. The app does not currently create transcripts from audio/video; it can clean uploaded transcripts and prepare/extract audio for external transcription workflows.
 - No direct NotebookLM upload automation is attempted because there is no official supported API in this MVP.
 
 ## Recommended Large-File Workflow
@@ -103,7 +103,7 @@ The included `netlify.toml` sets the same build settings and adds the cross-orig
 2. Try `Extract audio only` or `Smallest file / audio only` first.
 3. If a video must be uploaded, use `Balanced` compression before splitting.
 4. Keep each exported file below the 190MB safe target before uploading to NotebookLM.
-5. For transcripts, upload `.txt`, `.srt`, or `.vtt` files and export the cleaned NotebookLM-ready `.txt` chunks.
+5. For transcript cleanup, upload an existing `.txt`, `.srt`, or `.vtt` file and export cleaned NotebookLM-ready `.txt` chunks.
 
 ## Test Fixtures
 

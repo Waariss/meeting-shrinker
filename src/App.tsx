@@ -21,7 +21,6 @@ import {
   parseVttToText,
   splitTranscriptByWords
 } from './lib/transcriptCleaner'
-import { MockTranscriptionProvider } from './types/transcript'
 
 const accept = SUPPORTED_EXTENSIONS.map((extension) => `.${extension}`).join(',')
 const transcriptExtensions = new Set(['txt', 'srt', 'vtt'])
@@ -54,8 +53,7 @@ const copy = {
         { value: 'audio' as const, label: 'Extract audio only', helper: 'Prepare audio for NotebookLM or STT upload' },
         { value: 'video' as const, label: 'Compress video', helper: 'Reduce MP4 size for easier upload' },
         { value: 'split' as const, label: 'Split file only', helper: 'Split large files into safer parts' },
-        { value: 'transcript' as const, label: 'Transcript only', helper: 'Clean English or Thai transcript text' },
-        { value: 'full' as const, label: 'Full preparation mode', helper: 'Compress, extract audio, split, and prep transcript' }
+        { value: 'full' as const, label: 'Full preparation mode', helper: 'Compress, extract audio, and split if needed' }
       ],
       presets: [
         { value: 'smallest' as const, label: 'Smallest file / audio only', helper: '48k-64k audio target' },
@@ -87,9 +85,9 @@ const copy = {
         'Safe split target: 190MB per output file.',
         'Transcript text target: under 450,000 words per file.'
       ],
-      transcriptTitle: 'English / Thai transcript support',
+      transcriptTitle: 'Coming feature: generated transcript',
       transcriptBody:
-        'Use existing English or Thai TXT, SRT, and VTT transcripts now. For generated transcripts, this MVP prepares the audio file so you can upload it to NotebookLM or connect an STT API later.',
+        'This app does not create transcripts from audio yet. For now, upload an existing English or Thai TXT, SRT, or VTT transcript and the app will clean and split it for NotebookLM. Use extracted audio with NotebookLM or another STT tool if you need transcription.',
       memoryNote:
         'Mobile browsers may run out of memory on long meetings. For large Google Meet recordings, use a laptop or desktop browser.'
     },
@@ -130,8 +128,7 @@ const copy = {
         { value: 'audio' as const, label: 'แยกเสียงเท่านั้น', helper: 'เตรียม audio สำหรับ NotebookLM หรือ STT' },
         { value: 'video' as const, label: 'บีบวิดีโอ', helper: 'ลดขนาด MP4 เพื่ออัปโหลดง่ายขึ้น' },
         { value: 'split' as const, label: 'แบ่งไฟล์เท่านั้น', helper: 'แบ่งไฟล์ใหญ่เป็นหลาย part' },
-        { value: 'transcript' as const, label: 'Transcript เท่านั้น', helper: 'จัดข้อความ transcript ไทย/อังกฤษให้อ่านง่าย' },
-        { value: 'full' as const, label: 'เตรียมครบชุด', helper: 'บีบ แยกเสียง แบ่งไฟล์ และเตรียม transcript' }
+        { value: 'full' as const, label: 'เตรียมครบชุด', helper: 'บีบ แยกเสียง และแบ่งไฟล์เมื่อจำเป็น' }
       ],
       presets: [
         { value: 'smallest' as const, label: 'เล็กสุด / audio only', helper: 'เป้าหมายเสียง 48k-64k' },
@@ -163,9 +160,9 @@ const copy = {
         'safe split target: 190MB ต่อไฟล์ output',
         'เป้าหมาย transcript: ต่ำกว่า 450,000 คำต่อไฟล์'
       ],
-      transcriptTitle: 'รองรับ transcript ไทย / อังกฤษ',
+      transcriptTitle: 'Coming feature: สร้าง transcript อัตโนมัติ',
       transcriptBody:
-        'ตอนนี้ใช้ transcript TXT, SRT และ VTT ภาษาไทยหรืออังกฤษได้ทันที ส่วนการ generate transcript MVP นี้จะเตรียม audio ให้เอาไปอัปโหลด NotebookLM หรือเชื่อม STT API ในอนาคต',
+        'ตอนนี้เว็บยังไม่สร้าง transcript จากเสียงเอง ถ้ามี transcript ภาษาไทยหรืออังกฤษเป็น TXT, SRT หรือ VTT อยู่แล้ว สามารถอัปโหลดเพื่อ clean และ split สำหรับ NotebookLM ได้ ส่วนการถอดเสียงให้ใช้ audio ที่แยกออกมากับ NotebookLM หรือ STT tool อื่นก่อน',
       memoryNote: 'ไฟล์ประชุมยาว ๆ อาจทำให้ browser มือถือ memory ไม่พอ แนะนำให้ใช้ laptop หรือ desktop'
     },
     messages: {
@@ -297,16 +294,6 @@ function App() {
     if (outputMode === 'split') {
       addLog(t.messages.splittingFile)
       outputs.push(...(await splitMediaByDuration(file, SAFE_TARGET_MB)))
-    }
-
-    if ((outputMode === 'transcript' || outputMode === 'full') && mediaExtensions.has(getFileExtension(file.name))) {
-      const provider = new MockTranscriptionProvider()
-      const mock = await provider.transcribe(file, 'th')
-      outputs.push(
-        new File([mock.text], `${baseName(file.name)}_transcription-placeholder.txt`, {
-          type: 'text/plain;charset=utf-8'
-        })
-      )
     }
 
     return outputs

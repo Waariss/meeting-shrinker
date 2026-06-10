@@ -1,7 +1,7 @@
 import { Settings2 } from 'lucide-react'
 import type { CompressionPreset } from '../lib/ffmpegClient'
 
-export type OutputMode = 'audio' | 'video' | 'split' | 'transcript' | 'full'
+export type OutputMode = 'audio' | 'video' | 'split' | 'full'
 
 type ProcessingOptionsProps = {
   outputMode: OutputMode

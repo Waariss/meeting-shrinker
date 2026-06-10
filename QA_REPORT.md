@@ -44,7 +44,7 @@ npm run preview
 
 ## Remaining Limitations
 
-- Real Thai/English transcription is still a placeholder unless an STT provider is connected.
+- Real Thai/English transcription generation is not implemented yet. Existing TXT/SRT/VTT transcript cleanup is supported.
 - Browser-side ffmpeg can still fail on very large files or low-memory mobile devices.
 - Time-based media splitting depends on ffmpeg.wasm detecting duration correctly.
 - Large 180-210MB real-media validation was not run in this pass to avoid expensive browser memory failures.
