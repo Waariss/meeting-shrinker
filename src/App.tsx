@@ -54,6 +54,12 @@ const copy = {
       transcriptLabel: 'Existing transcript',
       transcriptHelper: 'Clean and split TXT, SRT, or VTT files you already have.'
     },
+    steps: [
+      'Choose media or transcript',
+      'Upload the file',
+      'Prepare NotebookLM files',
+      'Download or open NotebookLM'
+    ],
     options: {
       title: 'Media Processing',
       subtitle: 'Compress for NotebookLM and keep each output below the safe limit.',
@@ -122,7 +128,9 @@ const copy = {
       compressingVideo: 'Compressing video with selected preset...',
       skippingVideoForAudio: 'Skipping video compression for audio-only input.',
       splittingFile: 'Splitting file into NotebookLM-safe parts...',
-      done: 'Done. NotebookLM-ready files are available below.'
+      done: 'Done. NotebookLM-ready files are available below.',
+      largeMediaHint:
+        'Large media can be slow in the browser. For long meetings, use a desktop browser and try Extract audio only first.'
     }
   },
   th: {
@@ -145,6 +153,12 @@ const copy = {
       transcriptLabel: 'Transcript ที่มีอยู่แล้ว',
       transcriptHelper: 'Clean และ split ไฟล์ TXT, SRT หรือ VTT ที่มีอยู่แล้ว'
     },
+    steps: [
+      'เลือก media หรือ transcript',
+      'อัปโหลดไฟล์',
+      'เตรียมไฟล์สำหรับ NotebookLM',
+      'ดาวน์โหลดหรือเปิด NotebookLM'
+    ],
     options: {
       title: 'ประมวลผลไฟล์เสียง/วิดีโอ',
       subtitle: 'บีบไฟล์สำหรับ NotebookLM และคุม output ให้อยู่ใต้ safe limit',
@@ -212,7 +226,9 @@ const copy = {
       compressingVideo: 'กำลังบีบวิดีโอตาม preset ที่เลือก...',
       skippingVideoForAudio: 'ข้ามการบีบวิดีโอ เพราะ input เป็นไฟล์เสียง',
       splittingFile: 'กำลังแบ่งไฟล์ให้อยู่ในขนาดที่เหมาะกับ NotebookLM...',
-      done: 'เสร็จแล้ว ไฟล์สำหรับ NotebookLM อยู่ด้านล่าง'
+      done: 'เสร็จแล้ว ไฟล์สำหรับ NotebookLM อยู่ด้านล่าง',
+      largeMediaHint:
+        'ไฟล์ media ขนาดใหญ่อาจประมวลผลช้าใน browser สำหรับ meeting ยาว ๆ แนะนำใช้ desktop และลองแยกเสียงเท่านั้นก่อน'
     }
   }
 }
@@ -407,11 +423,25 @@ function App() {
       />
       <main className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 lg:px-8">
         <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel dark:border-white/10 dark:bg-[#111f27]">
+          <div className="mb-5 grid gap-2 md:grid-cols-4">
+            {t.steps.map((step, index) => (
+              <div
+                key={step}
+                className="flex min-h-11 items-center gap-2 rounded-lg bg-ink/5 px-3 py-2 text-sm text-ink/75 dark:bg-white/10 dark:text-white/75"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sea text-xs font-semibold text-white">
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
           <h2 className="text-lg font-semibold text-ink dark:text-white">{t.workflow.title}</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <button
               type="button"
               onClick={() => handleWorkflowChange('media')}
+              aria-pressed={workflow === 'media'}
               className={`flex min-h-20 items-start gap-3 rounded-lg border p-4 text-left transition active:scale-[0.99] ${
                 workflow === 'media'
                   ? 'border-sea bg-sea/5'
@@ -429,6 +459,7 @@ function App() {
             <button
               type="button"
               onClick={() => handleWorkflowChange('transcript')}
+              aria-pressed={workflow === 'transcript'}
               className={`flex min-h-20 items-start gap-3 rounded-lg border p-4 text-left transition active:scale-[0.99] ${
                 workflow === 'transcript'
                   ? 'border-sea bg-sea/5'
@@ -459,7 +490,15 @@ function App() {
         {primaryFile ? (
           <div className="grid gap-4">
             {files.map((file) => (
-              <FileInfoCard key={`${file.name}-${file.size}-${file.lastModified}`} file={file} />
+              <FileInfoCard
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                file={file}
+                hint={
+                  workflow === 'media' && bytesToMB(file.size) > 100
+                    ? t.messages.largeMediaHint
+                    : undefined
+                }
+              />
             ))}
           </div>
         ) : null}

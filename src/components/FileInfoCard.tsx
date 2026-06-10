@@ -3,6 +3,7 @@ import { formatBytes, getNotebookLMStatus } from '../lib/fileSize'
 
 type FileInfoCardProps = {
   file: File
+  hint?: string
 }
 
 const toneClasses = {
@@ -17,7 +18,7 @@ const toneIcons = {
   red: AlertTriangle
 }
 
-export function FileInfoCard({ file }: FileInfoCardProps) {
+export function FileInfoCard({ file, hint }: FileInfoCardProps) {
   const status = getNotebookLMStatus(file.size)
   const StatusIcon = toneIcons[status.tone]
 
@@ -43,6 +44,11 @@ export function FileInfoCard({ file }: FileInfoCardProps) {
           </div>
         </div>
       </div>
+      {hint ? (
+        <div className="mt-4 rounded-lg border border-amber/30 bg-amber/10 px-4 py-3 text-sm leading-6 text-ink/75 dark:text-white/75">
+          {hint}
+        </div>
+      ) : null}
     </section>
   )
 }
