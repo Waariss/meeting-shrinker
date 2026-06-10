@@ -83,11 +83,11 @@ const copy = {
       limits: [
         'Local source size assumption: around 200MB per source.',
         'Safe split target: 190MB per output file.',
-        'Transcript text target: under 450,000 words per file.'
+        'Uploaded transcript target: under 450,000 words per output file.'
       ],
-      transcriptTitle: 'Coming feature: generated transcript',
+      transcriptTitle: 'Transcript cleanup now, auto transcript later',
       transcriptBody:
-        'This app does not create transcripts from audio yet. For now, upload an existing English or Thai TXT, SRT, or VTT transcript and the app will clean and split it for NotebookLM. Use extracted audio with NotebookLM or another STT tool if you need transcription.',
+        'Available now: upload an existing English or Thai TXT, SRT, or VTT transcript to clean and split it for NotebookLM. Coming feature: creating a transcript directly from audio/video. Until then, use the extracted audio with NotebookLM or another STT tool.',
       memoryNote:
         'Mobile browsers may run out of memory on long meetings. For large Google Meet recordings, use a laptop or desktop browser.'
     },
@@ -158,11 +158,11 @@ const copy = {
       limits: [
         'สมมติฐาน local source size: ประมาณ 200MB ต่อ source',
         'safe split target: 190MB ต่อไฟล์ output',
-        'เป้าหมาย transcript: ต่ำกว่า 450,000 คำต่อไฟล์'
+        'เป้าหมาย transcript ที่อัปโหลดเอง: ต่ำกว่า 450,000 คำต่อไฟล์ output'
       ],
-      transcriptTitle: 'Coming feature: สร้าง transcript อัตโนมัติ',
+      transcriptTitle: 'ตอนนี้ clean transcript ได้ / auto transcript ยังเป็น Coming feature',
       transcriptBody:
-        'ตอนนี้เว็บยังไม่สร้าง transcript จากเสียงเอง ถ้ามี transcript ภาษาไทยหรืออังกฤษเป็น TXT, SRT หรือ VTT อยู่แล้ว สามารถอัปโหลดเพื่อ clean และ split สำหรับ NotebookLM ได้ ส่วนการถอดเสียงให้ใช้ audio ที่แยกออกมากับ NotebookLM หรือ STT tool อื่นก่อน',
+        'ทำได้ตอนนี้: ถ้ามี transcript ภาษาไทยหรืออังกฤษเป็น TXT, SRT หรือ VTT อยู่แล้ว สามารถอัปโหลดเพื่อ clean และ split สำหรับ NotebookLM ได้ ส่วนที่ยังไม่มี: การสร้าง transcript จากเสียง/วิดีโอโดยตรง ระหว่างนี้ให้ใช้ audio ที่แยกออกมากับ NotebookLM หรือ STT tool อื่นก่อน',
       memoryNote: 'ไฟล์ประชุมยาว ๆ อาจทำให้ browser มือถือ memory ไม่พอ แนะนำให้ใช้ laptop หรือ desktop'
     },
     messages: {
