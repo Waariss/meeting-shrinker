@@ -32,9 +32,9 @@ export function ProgressPanel({ logs, isProcessing, error, title, idleText, proc
             <p key={`${log}-${index}`}>{log}</p>
           ))}
         </div>
-      ) : (
+      ) : !error ? (
         <p className="mt-3 text-sm text-ink/65 dark:text-white/65">{idleText}</p>
-      )}
+      ) : null}
     </section>
   )
 }

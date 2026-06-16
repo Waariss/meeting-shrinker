@@ -11,7 +11,6 @@ import { TranscriptOptions } from './components/TranscriptOptions'
 import { compressVideo, extractAudio, splitMediaByDuration, type CompressionPreset } from './lib/ffmpegClient'
 import { baseName, bytesToMB, getFileExtension } from './lib/fileSize'
 import {
-  MAX_BROWSER_FRIENDLY_MB,
   SAFE_TARGET_MB,
   SAFE_TARGET_WORDS,
   SUPPORTED_EXTENSIONS
@@ -119,7 +118,8 @@ const copy = {
     messages: {
       uploadFirst: 'Please upload a meeting file first.',
       unsupported: 'Unsupported file type. Try converting the file to MP4, MP3, TXT, SRT, or VTT first.',
-      hugeFile: 'This file is very large. Mobile browsers may not have enough memory; use a laptop or desktop.',
+      hugeFile:
+        'This file is very large. Browser processing may use a lot of memory; use a desktop browser and try Extract audio only first.',
       noOutput: 'No output files were created.',
       cannotProcess: 'Could not process this file. Try converting it to MP4 or MP3 first.',
       splitLarge: 'Output is still above 190MB. Splitting into multiple parts.',
@@ -130,7 +130,7 @@ const copy = {
       splittingFile: 'Splitting file into NotebookLM-safe parts...',
       done: 'Done. NotebookLM-ready files are available below.',
       largeMediaHint:
-        'Large media can be slow in the browser. For long meetings, use a desktop browser and try Extract audio only first.'
+        'Large media can be slow and memory-heavy in the browser. For long meetings, use a desktop browser and try Extract audio only first.'
     }
   },
   th: {
@@ -217,7 +217,8 @@ const copy = {
     messages: {
       uploadFirst: 'กรุณาอัปโหลดไฟล์ประชุมก่อน',
       unsupported: 'ไม่รองรับไฟล์นี้ ลองแปลงเป็น MP4, MP3, TXT, SRT หรือ VTT ก่อน',
-      hugeFile: 'ไฟล์นี้ใหญ่มาก มือถืออาจประมวลผลไม่ไหว แนะนำให้ใช้คอม',
+      hugeFile:
+        'ไฟล์นี้ใหญ่มาก การประมวลผลใน browser อาจใช้ memory สูง แนะนำใช้ desktop และลองแยกเสียงเท่านั้นก่อน',
       noOutput: 'ไม่พบไฟล์ผลลัพธ์',
       cannotProcess: 'ไม่สามารถประมวลผลไฟล์นี้ได้ ลองแปลงเป็น MP4 หรือ MP3 ก่อน',
       splitLarge: 'ไฟล์ยังเกิน 190MB ระบบจะแบ่งเป็นหลาย part ให้',
@@ -228,7 +229,7 @@ const copy = {
       splittingFile: 'กำลังแบ่งไฟล์ให้อยู่ในขนาดที่เหมาะกับ NotebookLM...',
       done: 'เสร็จแล้ว ไฟล์สำหรับ NotebookLM อยู่ด้านล่าง',
       largeMediaHint:
-        'ไฟล์ media ขนาดใหญ่อาจประมวลผลช้าใน browser สำหรับ meeting ยาว ๆ แนะนำใช้ desktop และลองแยกเสียงเท่านั้นก่อน'
+        'ไฟล์ media ขนาดใหญ่อาจช้าและใช้ memory สูงใน browser สำหรับ meeting ยาว ๆ แนะนำใช้ desktop และลองแยกเสียงเท่านั้นก่อน'
     }
   }
 }
@@ -301,11 +302,6 @@ function App() {
 
     if (hasWrongWorkflowFile) {
       setError(t.messages.unsupported)
-      return false
-    }
-
-    if (files.some((file) => bytesToMB(file.size) > MAX_BROWSER_FRIENDLY_MB)) {
-      setError(t.messages.hugeFile)
       return false
     }
 
