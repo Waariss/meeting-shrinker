@@ -8,6 +8,7 @@ export type CompressionPreset = 'smallest' | 'balanced' | 'quality'
 let ffmpeg: FFmpeg | null = null
 const videoExtensions = new Set(['mp4', 'mov', 'webm'])
 const audioExtensions = new Set(['mp3', 'm4a', 'wav'])
+const audioCopyContainers = new Set(['mp4', 'mov', 'm4a'])
 
 export async function loadFfmpeg(onLog?: (message: string) => void): Promise<FFmpeg> {
   if (ffmpeg?.loaded) return ffmpeg
@@ -30,12 +31,30 @@ export async function extractAudio(
   onLog?: (message: string) => void
 ): Promise<File> {
   const instance = await loadFfmpeg(onLog)
-  const inputName = `input.${file.name.split('.').pop() || 'mp4'}`
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'mp4'
+  const inputName = `input.${extension}`
   const outputName = `${baseName(file.name)}_audio.mp3`
   const bitrate = preset === 'smallest' ? '48k' : preset === 'quality' ? '128k' : '64k'
 
   await instance.writeFile(inputName, await fetchFile(file))
-  await instance.exec(['-i', inputName, '-vn', '-b:a', bitrate, '-ac', '1', outputName])
+
+  if (audioCopyContainers.has(extension)) {
+    const copiedOutputName = `${baseName(file.name)}_audio.m4a`
+
+    try {
+      onLog?.('Copying audio track without re-encoding...')
+      await instance.exec(['-i', inputName, '-map', '0:a:0', '-vn', '-c:a', 'copy', copiedOutputName])
+      const data = await instance.readFile(copiedOutputName)
+      await safeDelete(instance, [inputName, copiedOutputName])
+
+      return new File([data], copiedOutputName, { type: 'audio/mp4' })
+    } catch {
+      await safeDelete(instance, [copiedOutputName])
+      onLog?.('Audio copy failed. Re-encoding audio instead...')
+    }
+  }
+
+  await instance.exec(['-i', inputName, '-map', '0:a:0', '-vn', '-b:a', bitrate, '-ac', '1', outputName])
   const data = await instance.readFile(outputName)
   await safeDelete(instance, [inputName, outputName])
 
@@ -54,6 +73,8 @@ export async function compressVideo(
     smallest: [
       '-i',
       inputName,
+      '-map',
+      '0:a:0',
       '-vn',
       '-b:a',
       '48k',
@@ -62,6 +83,10 @@ export async function compressVideo(
     balanced: [
       '-i',
       inputName,
+      '-map',
+      '0:v:0',
+      '-map',
+      '0:a:0?',
       '-vf',
       'scale=-2:min(720\\,ih),fps=24',
       '-c:v',
@@ -77,6 +102,10 @@ export async function compressVideo(
     quality: [
       '-i',
       inputName,
+      '-map',
+      '0:v:0',
+      '-map',
+      '0:a:0?',
       '-vf',
       'scale=-2:min(1080\\,ih)',
       '-c:v',
@@ -135,6 +164,7 @@ export async function splitMediaByDuration(file: File, targetSizeMB = SAFE_TARGE
           String(segmentDuration),
           '-i',
           inputName,
+          ...buildStreamMapArgs(extension),
           '-c',
           'copy',
           '-avoid_negative_ts',
@@ -189,12 +219,16 @@ function buildReencodeSplitArgs(
   const baseArgs = ['-ss', String(startTime), '-t', String(segmentDuration), '-i', inputName]
 
   if (audioExtensions.has(extension)) {
-    return [...baseArgs, '-vn', '-b:a', '96k', outputName]
+    return [...baseArgs, '-map', '0:a:0', '-vn', '-b:a', '96k', outputName]
   }
 
   if (videoExtensions.has(extension)) {
     return [
       ...baseArgs,
+      '-map',
+      '0:v:0',
+      '-map',
+      '0:a:0?',
       '-vf',
       'scale=-2:min(720\\,ih),fps=24',
       '-c:v',
@@ -210,6 +244,12 @@ function buildReencodeSplitArgs(
   }
 
   throw new Error('Safe media splitting is unavailable for this file type.')
+}
+
+function buildStreamMapArgs(extension: string): string[] {
+  if (audioExtensions.has(extension)) return ['-map', '0:a:0']
+  if (videoExtensions.has(extension)) return ['-map', '0:v:0', '-map', '0:a:0?']
+  return []
 }
 
 function mimeTypeForExtension(extension: string): string {

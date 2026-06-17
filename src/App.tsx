@@ -126,6 +126,7 @@ const copy = {
       extractingAudio: 'Extracting audio for transcription or NotebookLM upload...',
       audioAlreadyReady: 'Audio file is already ready for NotebookLM. Checking whether it needs splitting...',
       compressingVideo: 'Compressing video with selected preset...',
+      videoCompressionFailed: 'Video compression failed. Keeping the extracted audio output.',
       skippingVideoForAudio: 'Skipping video compression for audio-only input.',
       splittingFile: 'Splitting file into NotebookLM-safe parts...',
       done: 'Done. NotebookLM-ready files are available below.',
@@ -225,6 +226,7 @@ const copy = {
       extractingAudio: 'กำลังแยกเสียงสำหรับ transcription หรือ NotebookLM...',
       audioAlreadyReady: 'ไฟล์เสียงพร้อมใช้แล้ว กำลังตรวจว่าต้องแบ่งไฟล์หรือไม่...',
       compressingVideo: 'กำลังบีบวิดีโอตาม preset ที่เลือก...',
+      videoCompressionFailed: 'บีบวิดีโอไม่สำเร็จ ระบบจะเก็บไฟล์เสียงที่แยกได้ไว้ให้',
       skippingVideoForAudio: 'ข้ามการบีบวิดีโอ เพราะ input เป็นไฟล์เสียง',
       splittingFile: 'กำลังแบ่งไฟล์ให้อยู่ในขนาดที่เหมาะกับ NotebookLM...',
       done: 'เสร็จแล้ว ไฟล์สำหรับ NotebookLM อยู่ด้านล่าง',
@@ -349,12 +351,17 @@ function App() {
 
     if ((outputMode === 'video' || outputMode === 'full') && isVideo) {
       addLog(t.messages.compressingVideo)
-      const compressed = await compressVideo(file, preset, addLog)
-      if (bytesToMB(compressed.size) > SAFE_TARGET_MB) {
-        addLog(t.messages.splitLarge)
-        outputs.push(...(await splitMediaByDuration(compressed, SAFE_TARGET_MB)))
-      } else {
-        outputs.push(compressed)
+      try {
+        const compressed = await compressVideo(file, preset, addLog)
+        if (bytesToMB(compressed.size) > SAFE_TARGET_MB) {
+          addLog(t.messages.splitLarge)
+          outputs.push(...(await splitMediaByDuration(compressed, SAFE_TARGET_MB)))
+        } else {
+          outputs.push(compressed)
+        }
+      } catch (caught) {
+        if (outputMode !== 'full' || !outputs.length) throw caught
+        addLog(t.messages.videoCompressionFailed)
       }
     } else if ((outputMode === 'video' || outputMode === 'full') && isAudio) {
       addLog(t.messages.skippingVideoForAudio)
