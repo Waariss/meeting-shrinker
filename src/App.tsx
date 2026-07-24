@@ -11,6 +11,7 @@ import { TranscriptOptions } from './components/TranscriptOptions'
 import { compressVideo, extractAudio, splitMediaByDuration, type CompressionPreset } from './lib/ffmpegClient'
 import { baseName, bytesToMB, getFileExtension } from './lib/fileSize'
 import {
+  MAX_BROWSER_FRIENDLY_MB,
   SAFE_TARGET_MB,
   SAFE_TARGET_WORDS,
   SUPPORTED_EXTENSIONS
@@ -342,10 +343,11 @@ function App() {
     if (outputMode === 'audio' || outputMode === 'full') {
       addLog(isAudio ? t.messages.audioAlreadyReady : t.messages.extractingAudio)
       const audio = isAudio ? file : await extractAudio(file, preset, addLog)
-      outputs.push(audio)
       if (bytesToMB(audio.size) > SAFE_TARGET_MB) {
         addLog(t.messages.splitLarge)
         outputs.push(...(await splitMediaByDuration(audio, SAFE_TARGET_MB)))
+      } else {
+        outputs.push(audio)
       }
     }
 
@@ -385,6 +387,11 @@ function App() {
 
     try {
       const outputs: File[] = []
+
+      if (workflow === 'media' && files.some((f) => bytesToMB(f.size) > MAX_BROWSER_FRIENDLY_MB)) {
+        addLog(t.messages.hugeFile)
+      }
+
       for (const file of files) {
         const extension = getFileExtension(file.name)
         addLog(`Preparing ${file.name}...`)
@@ -497,8 +504,12 @@ function App() {
                 key={`${file.name}-${file.size}-${file.lastModified}`}
                 file={file}
                 hint={
-                  workflow === 'media' && bytesToMB(file.size) > 100
-                    ? t.messages.largeMediaHint
+                  workflow === 'media'
+                    ? bytesToMB(file.size) > MAX_BROWSER_FRIENDLY_MB
+                      ? t.messages.hugeFile
+                      : bytesToMB(file.size) > 100
+                        ? t.messages.largeMediaHint
+                        : undefined
                     : undefined
                 }
               />
