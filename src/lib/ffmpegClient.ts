@@ -193,12 +193,15 @@ async function safeDelete(instance: FFmpeg, names: string[]): Promise<void> {
 
 async function probeDuration(instance: FFmpeg, inputName: string): Promise<number> {
   const logs: string[] = []
-  instance.on('log', ({ message }) => logs.push(message))
+  const handler = ({ message }: { message: string }) => logs.push(message)
+  instance.on('log', handler)
 
   try {
     await instance.exec(['-i', inputName])
   } catch {
     // ffmpeg prints metadata, including Duration, before failing because no output is provided.
+  } finally {
+    instance.off('log', handler)
   }
 
   const durationLine = logs.find((line) => line.includes('Duration:'))
